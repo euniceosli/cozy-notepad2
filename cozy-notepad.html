@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 Cozy Notepad</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fdf4f0;
+  --paper: #fffcfa;
+  --accent: #e8a0b0;
+  --accent2: #f7c5d0;
+  --text: #5a3e4b;
+  --text-light: #a07080;
+  --border: #f0d5dc;
+  --shadow: rgba(200,140,160,0.18);
+  --toolbar: #fff5f7;
+  --btn-hover: #fde8ee;
+  --sticker-panel: #fff9fb;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.5s, color 0.5s;
+}
+
+body.theme-lavender {
+  --bg: #f5f0fd; --paper: #fdfaff;
+  --accent: #9b7fd4; --accent2: #c9b8ea;
+  --text: #3d2f5a; --text-light: #7a6090;
+  --border: #ddd0f5; --shadow: rgba(120,80,180,0.15);
+  --toolbar: #f7f2ff; --btn-hover: #ede3ff; --sticker-panel: #faf5ff;
+}
+body.theme-matcha {
+  --bg: #f0f5ee; --paper: #fafff8;
+  --accent: #7aaa74; --accent2: #b3d4af;
+  --text: #2e4a2a; --text-light: #607860;
+  --border: #cce0c8; --shadow: rgba(80,140,70,0.15);
+  --toolbar: #f2f8f0; --btn-hover: #e0f2dc; --sticker-panel: #f5faf3;
+}
+body.theme-sky {
+  --bg: #eef5fd; --paper: #f8fbff;
+  --accent: #6aadde; --accent2: #aed6f1;
+  --text: #1e3a5a; --text-light: #5080a0;
+  --border: #c0dcf0; --shadow: rgba(50,120,190,0.15);
+  --toolbar: #f0f7fd; --btn-hover: #dbeeff; --sticker-panel: #f3f8ff;
+}
+body.theme-honey {
+  --bg: #fdf8ee; --paper: #fffef8;
+  --accent: #e0a030; --accent2: #f5d080;
+  --text: #4a3410; --text-light: #9a7030;
+  --border: #f0dca0; --shadow: rgba(180,130,20,0.15);
+  --toolbar: #fffaee; --btn-hover: #fff3cc; --sticker-panel: #fffdf5;
+}
+body.theme-night {
+  --bg: #1a1625; --paper: #261f35;
+  --accent: #c084c8; --accent2: #e0b0e8;
+  --text: #f0e8f8; --text-light: #b090c0;
+  --border: #4a3860; --shadow: rgba(150,80,180,0.25);
+  --toolbar: #1e1830; --btn-hover: #2e2445; --sticker-panel: #221a32;
+}
+
+/* HEADER */
+header {
+  background: var(--toolbar);
+  border-bottom: 1.5px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+
+.logo {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--accent);
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.sep { width: 1.5px; height: 24px; background: var(--border); margin: 0 2px; }
+
+.fmt-btn {
+  background: none;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  width: 30px; height: 30px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem; font-weight: 700;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.fmt-btn:hover { background: var(--btn-hover); border-color: var(--border); color: var(--text); }
+
+.tb-btn {
+  background: none;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 5px 11px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
+}
+.tb-btn:hover { background: var(--btn-hover); border-color: var(--border); color: var(--text); }
+.tb-btn.panel-open { background: var(--accent2); border-color: var(--accent); color: var(--text); }
+
+#save-status {
+  font-size: 0.7rem; color: var(--text-light);
+  margin-left: auto; white-space: nowrap;
+  opacity: 0; transition: opacity 0.4s;
+}
+#save-status.show { opacity: 1; }
+
+/* MAIN */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 40px 24px 80px;
+  position: relative;
+}
+
+/* FLOATING STICKERS / IMAGES */
+#canvas-area {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.draggable {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  pointer-events: all;
+  touch-action: none;
+  transition: transform 0.1s;
+}
+.draggable:hover { transform: scale(1.07); }
+.draggable.dragging { cursor: grabbing; transform: scale(1.12); z-index: 999; }
+
+.sticker-el { font-size: 2.2rem; line-height: 1; display: block; }
+
+.image-el {
+  max-width: 180px; max-height: 180px;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px var(--shadow);
+  border: 3px solid var(--paper);
+  display: block;
+}
+
+.drag-delete {
+  position: absolute; top: -8px; right: -8px;
+  width: 20px; height: 20px;
+  background: var(--accent); color: white;
+  border-radius: 50%; font-size: 0.6rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: 0;
+  transition: opacity 0.15s;
+  border: none; pointer-events: all; z-index: 10;
+}
+.draggable:hover .drag-delete { opacity: 1; }
+
+/* NOTEPAD */
+#notepad {
+  width: 100%; max-width: 700px;
+  background: var(--paper);
+  border-radius: 20px;
+  box-shadow: 0 4px 32px var(--shadow), 0 1px 4px rgba(0,0,0,0.04);
+  border: 1.5px solid var(--border);
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+  transition: background 0.5s;
+  z-index: 5;
+}
+
+.paper-lines {
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    transparent, transparent 31px,
+    var(--border) 31px, var(--border) 32px
+  );
+  background-position: 0 56px;
+  opacity: 0.3; pointer-events: none;
+}
+
+.note-top {
+  padding: 22px 28px 12px;
+  border-bottom: 1.5px solid var(--border);
+}
+#note-title {
+  font-family: 'Lora', serif; font-size: 1.5rem; font-style: italic;
+  color: var(--text); background: none; border: none; outline: none;
+  width: 100%; font-weight: 500;
+}
+#note-title::placeholder { color: var(--accent2); }
+#note-date { font-size: 0.7rem; color: var(--text-light); margin-top: 4px; }
+
+#editor {
+  flex: 1; min-height: 500px;
+  padding: 20px 28px;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.97rem; line-height: 2rem;
+  color: var(--text); background: none;
+}
+#editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--accent2); pointer-events: none;
+}
+
+/* PANELS */
+.panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--sticker-panel);
+  border-top: 2px solid var(--border);
+  box-shadow: 0 -4px 24px var(--shadow);
+  padding: 16px 20px 28px;
+  z-index: 300;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  max-height: 280px; overflow-y: auto;
+}
+.panel.open { transform: translateY(0); }
+.panel-title {
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text-light); margin-bottom: 14px;
+}
+
+/* Sticker grid */
+#sticker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.sticker-pick {
+  font-size: 1.8rem; cursor: pointer;
+  border-radius: 10px; padding: 4px;
+  transition: transform 0.12s, background 0.12s; line-height: 1;
+}
+.sticker-pick:hover { transform: scale(1.3); background: var(--btn-hover); }
+
+/* Theme panel */
+.theme-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.theme-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; padding: 8px 12px;
+  border-radius: 14px; border: 2px solid transparent;
+  transition: all 0.18s;
+  font-size: 0.72rem; color: var(--text-light); font-weight: 600;
+}
+.theme-card:hover { background: var(--btn-hover); }
+.theme-card.active { border-color: var(--accent); color: var(--text); }
+.theme-swatch {
+  width: 52px; height: 34px; border-radius: 10px;
+  border: 2px solid rgba(0,0,0,0.07);
+}
+
+#overlay {
+  display: none; position: fixed; inset: 0; z-index: 250;
+}
+#overlay.show { display: block; }
+
+/* Decorative blobs */
+.blob {
+  position: fixed; border-radius: 50%;
+  filter: blur(70px); opacity: 0.15;
+  pointer-events: none; z-index: 0;
+  transition: background 0.5s;
+}
+.blob-1 { width: 300px; height: 300px; background: var(--accent2); top: -60px; right: -50px; }
+.blob-2 { width: 250px; height: 250px; background: var(--accent); bottom: 40px; left: -60px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+#img-upload { display: none; }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div id="canvas-area"></div>
+
+<header>
+  <span class="logo">🌸 cozy notes</span>
+  <div class="sep"></div>
+
+  <button class="fmt-btn" onclick="fmt('bold')" title="Bold"><b>B</b></button>
+  <button class="fmt-btn" onclick="fmt('italic')" title="Italic"><i>I</i></button>
+  <button class="fmt-btn" onclick="fmt('underline')" title="Underline" style="text-decoration:underline">U</button>
+  <button class="fmt-btn" onclick="fmt('strikeThrough')" title="Strike" style="text-decoration:line-through">S</button>
+
+  <div class="sep"></div>
+
+  <button class="fmt-btn" onclick="changeFontSize(-1)" title="Smaller text" style="font-size:0.7rem">A-</button>
+  <button class="fmt-btn" onclick="changeFontSize(1)" title="Larger text">A+</button>
+
+  <div class="sep"></div>
+
+  <button class="tb-btn" id="btn-stickers" onclick="togglePanel('sticker-panel','btn-stickers')">🎀 Stickers</button>
+  <button class="tb-btn" id="btn-themes" onclick="togglePanel('theme-panel','btn-themes')">🎨 Themes</button>
+  <button class="tb-btn" onclick="document.getElementById('img-upload').click()">🖼️ Image</button>
+
+  <input type="file" id="img-upload" accept="image/*" onchange="addImage(event)">
+  <span id="save-status">✓ saved</span>
+</header>
+
+<main>
+  <div id="notepad">
+    <div class="paper-lines"></div>
+    <div class="note-top">
+      <input id="note-title" type="text" placeholder="give your note a title ✦" spellcheck="false">
+      <div id="note-date"></div>
+    </div>
+    <div id="editor" contenteditable="true" data-placeholder="start writing something lovely… 🌷"></div>
+  </div>
+</main>
+
+<!-- STICKER PANEL -->
+<div class="panel" id="sticker-panel">
+  <div class="panel-title">🎀 tap a sticker to place it</div>
+  <div id="sticker-grid"></div>
+</div>
+
+<!-- THEME PANEL -->
+<div class="panel" id="theme-panel">
+  <div class="panel-title">🎨 pick a vibe</div>
+  <div class="theme-options" id="theme-options"></div>
+</div>
+
+<div id="overlay" onclick="closeAllPanels()"></div>
+
+<script>
+// ── STICKERS ──
+const STICKERS = [
+  '🌸','🌺','🌷','🌹','🌻','🌼','💐','🍄','🍓','🍒','🍑','🍋',
+  '🌈','⭐','✨','💫','🌙','☀️','❄️','🌊','🍃','🍀','🌿','🪷',
+  '🦋','🐝','🐞','🐱','🐰','🐻','🦊','🐼','🐸','🦄','🐾','🫧',
+  '🎀','🎁','🎈','🎉','🎊','🎵','🎶','💝','💖','💗','💎','🔮',
+  '✏️','📝','📖','📚','🖊️','📌','🗒️','✂️','🎨','🪄','🌟',
+  '🍰','🧁','🍩','🍪','☕','🍵','🧋','🍫','🍬','🍭','🫶','💅',
+];
+
+const grid = document.getElementById('sticker-grid');
+STICKERS.forEach(s => {
+  const el = document.createElement('span');
+  el.className = 'sticker-pick';
+  el.textContent = s;
+  el.addEventListener('click', () => { placeSticker(s); closeAllPanels(); });
+  grid.appendChild(el);
+});
+
+// ── THEMES ──
+const THEMES = [
+  { id: 'blossom', name: 'Blossom 🌸', grad: ['#fdf4f0','#e8a0b0','#fff0f4'] },
+  { id: 'lavender', name: 'Lavender 💜', grad: ['#f5f0fd','#9b7fd4','#e8e0f8'] },
+  { id: 'matcha', name: 'Matcha 🍵', grad: ['#f0f5ee','#7aaa74','#d8ecd4'] },
+  { id: 'sky', name: 'Sky 🩵', grad: ['#eef5fd','#6aadde','#c8e4f8'] },
+  { id: 'honey', name: 'Honey 🍯', grad: ['#fdf8ee','#e0a030','#f8e8b0'] },
+  { id: 'night', name: 'Night 🌙', grad: ['#1a1625','#c084c8','#2e1a40'] },
+];
+
+const themeOpts = document.getElementById('theme-options');
+THEMES.forEach(t => {
+  const card = document.createElement('div');
+  card.className = 'theme-card';
+  card.dataset.theme = t.id;
+  const sw = document.createElement('div');
+  sw.className = 'theme-swatch';
+  sw.style.background = `linear-gradient(135deg,${t.grad[0]},${t.grad[1]},${t.grad[2]})`;
+  card.appendChild(sw);
+  card.appendChild(document.createTextNode(t.name));
+  card.addEventListener('click', () => applyTheme(t.id));
+  themeOpts.appendChild(card);
+});
+
+function applyTheme(id) {
+  // remove all theme classes
+  document.body.classList.remove(...THEMES.map(t=>'theme-'+t.id));
+  if (id !== 'blossom') document.body.classList.add('theme-'+id);
+  document.querySelectorAll('.theme-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.theme === id));
+  saveData();
+  closeAllPanels();
+}
+
+// ── PANELS ──
+let activePanel = null;
+function togglePanel(id, btnId) {
+  if (activePanel === id) { closeAllPanels(); return; }
+  closeAllPanels(false);
+  document.getElementById(id).classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  if (btnId) document.getElementById(btnId).classList.add('panel-open');
+  activePanel = id;
+}
+function closeAllPanels(resetActive = true) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+  document.getElementById('overlay').classList.remove('show');
+  document.querySelectorAll('.tb-btn').forEach(b => b.classList.remove('panel-open'));
+  if (resetActive) activePanel = null;
+}
+
+// ── TEXT FORMAT ──
+function fmt(cmd) {
+  document.getElementById('editor').focus();
+  document.execCommand(cmd, false, null);
+  saveData();
+}
+let fontSize = 15;
+function changeFontSize(d) {
+  fontSize = Math.max(11, Math.min(26, fontSize + d));
+  document.getElementById('editor').style.fontSize = fontSize + 'px';
+  saveData();
+}
+
+// ── STICKER PLACEMENT ──
+function placeSticker(emoji, left, top) {
+  const area = document.getElementById('canvas-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'draggable';
+  wrap.style.left = (left ?? (80 + Math.random()*(window.innerWidth-180))) + 'px';
+  wrap.style.top  = (top  ?? (80 + Math.random()*(window.innerHeight-200))) + 'px';
+
+  const span = document.createElement('span');
+  span.className = 'sticker-el';
+  span.textContent = emoji;
+
+  const del = makeDeleteBtn(wrap);
+  wrap.appendChild(span);
+  wrap.appendChild(del);
+  area.appendChild(wrap);
+  makeDraggable(wrap);
+  saveData();
+}
+
+// ── IMAGE PLACEMENT ──
+function addImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => placeImage(e.target.result);
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+function placeImage(src, left, top) {
+  const area = document.getElementById('canvas-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'draggable';
+  wrap.style.left = (left ?? (80 + Math.random()*(window.innerWidth-240))) + 'px';
+  wrap.style.top  = (top  ?? (80 + Math.random()*(window.innerHeight-240))) + 'px';
+
+  const img = document.createElement('img');
+  img.className = 'image-el';
+  img.src = src;
+  img.draggable = false;
+
+  const del = makeDeleteBtn(wrap);
+  wrap.appendChild(img);
+  wrap.appendChild(del);
+  area.appendChild(wrap);
+  makeDraggable(wrap);
+  saveData();
+}
+
+function makeDeleteBtn(wrap) {
+  const btn = document.createElement('button');
+  btn.className = 'drag-delete';
+  btn.textContent = '✕';
+  btn.addEventListener('click', e => { e.stopPropagation(); wrap.remove(); saveData(); });
+  return btn;
+}
+
+// ── DRAG ──
+function makeDraggable(el) {
+  let ox, oy, active = false;
+  const down = e => {
+    if (e.target.classList.contains('drag-delete')) return;
+    active = true;
+    const t = e.touches ? e.touches[0] : e;
+    const r = el.getBoundingClientRect();
+    ox = t.clientX - r.left; oy = t.clientY - r.top;
+    el.classList.add('dragging');
+    el.style.zIndex = 500;
+    e.preventDefault();
+  };
+  const move = e => {
+    if (!active) return;
+    const t = e.touches ? e.touches[0] : e;
+    el.style.left = (t.clientX - ox) + 'px';
+    el.style.top  = (t.clientY - oy) + 'px';
+    e.preventDefault();
+  };
+  const up = () => {
+    if (!active) return;
+    active = false;
+    el.classList.remove('dragging');
+    el.style.zIndex = '';
+    saveData();
+  };
+  el.addEventListener('mousedown', down);
+  el.addEventListener('touchstart', down, {passive:false});
+  window.addEventListener('mousemove', move);
+  window.addEventListener('touchmove', move, {passive:false});
+  window.addEventListener('mouseup', up);
+  window.addEventListener('touchend', up);
+}
+
+// ── DATE ──
+document.getElementById('note-date').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── SAVE ──
+let saveTimer;
+function scheduleAutoSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveData, 700); }
+
+function saveData() {
+  const items = [];
+  document.querySelectorAll('#canvas-area .draggable').forEach(el => {
+    const sticker = el.querySelector('.sticker-el');
+    const img = el.querySelector('.image-el');
+    items.push({
+      type: sticker ? 'sticker' : 'image',
+      content: sticker ? sticker.textContent : img.src,
+      left: el.style.left, top: el.style.top,
+    });
+  });
+  localStorage.setItem('cozyNotepad_v2', JSON.stringify({
+    title: document.getElementById('note-title').value,
+    content: document.getElementById('editor').innerHTML,
+    theme: getCurrentTheme(),
+    fontSize,
+    items,
+  }));
+  const s = document.getElementById('save-status');
+  s.classList.add('show');
+  clearTimeout(s._t);
+  s._t = setTimeout(() => s.classList.remove('show'), 1800);
+}
+
+function getCurrentTheme() {
+  for (const t of THEMES) {
+    if (document.body.classList.contains('theme-'+t.id)) return t.id;
+  }
+  return 'blossom';
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('cozyNotepad_v2');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.title) document.getElementById('note-title').value = d.title;
+    if (d.content) document.getElementById('editor').innerHTML = d.content;
+    if (d.theme) applyTheme(d.theme);
+    if (d.fontSize) { fontSize = d.fontSize; document.getElementById('editor').style.fontSize = fontSize+'px'; }
+    if (d.items) d.items.forEach(item => {
+      if (item.type === 'sticker') placeSticker(item.content, parseFloat(item.left), parseFloat(item.top));
+      else placeImage(item.content, parseFloat(item.left), parseFloat(item.top));
+    });
+  } catch(e) {}
+}
+
+document.getElementById('editor').addEventListener('input', scheduleAutoSave);
+document.getElementById('note-title').addEventListener('input', scheduleAutoSave);
+
+// Set blossom as default active
+document.querySelector('[data-theme="blossom"]').classList.add('active');
+loadData();
+</script>
+</body>
+</html>
